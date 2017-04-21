@@ -233,6 +233,9 @@ public:
   bool is_koth_win() const;
   bool is_koth_loss() const;
 #endif
+#ifdef HELPMATE
+  bool is_helpmate() const;
+#endif
 #ifdef LOSERS
   bool is_losers() const;
   bool is_losers_win() const;
@@ -755,6 +758,12 @@ inline bool Position::can_capture() const {
 }
 #endif
 
+#ifdef HELPMATE
+inline bool Position::is_helpmate() const {
+  return var == HELPMATE_VARIANT;
+}
+#endif
+
 #ifdef LOSERS
 inline bool Position::is_losers() const {
   return var == LOSERS_VARIANT;
@@ -1064,10 +1073,18 @@ inline Value Position::variant_result(int ply, Value draw_value) const {
 }
 
 inline Value Position::checkmate_value(int ply) const {
+  switch (var)
+  {
+#ifdef HELPMATE
+  case HELPMATE_VARIANT:
+      return sideToMove == (subvar == ANTIHELPMATE_VARIANT ? WHITE : BLACK) ? mate_in(ply) : mated_in(ply);
+#endif
 #ifdef LOSERS
-  if (is_losers())
+  case LOSERS_VARIANT:
       return mate_in(ply);
 #endif
+  default:;
+  }
   return mated_in(ply);
 }
 
