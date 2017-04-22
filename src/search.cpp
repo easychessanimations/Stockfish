@@ -638,6 +638,9 @@ void Thread::search() {
           {
               Depth adjustedDepth = std::max(1, rootDepth - failedHighCnt - searchAgainCounter);
               bestValue = ::search<PV>(rootPos, ss, alpha, beta, adjustedDepth, false);
+#ifdef HELPMATE
+              if (rootPos.is_helpmate()) bestValue = -bestValue;
+#endif
 
               // Bring the best move to the front. It is critical that sorting
               // is done with a stable algorithm because all the values but the
@@ -1304,7 +1307,10 @@ moves_loop: // When in check, search starts from here
 #ifdef ANTI
               if (pos.is_anti()) {} else
 #endif
-              if (!pos.see_ge(move, Value(-(32 - std::min(lmrDepth, 18)) * lmrDepth * lmrDepth)))
+#ifdef HELPMATE
+              if (pos.is_helpmate()) {} else
+#endif
+              if (!pos.see_ge(move, Value(-(31 - std::min(lmrDepth, 18)) * lmrDepth * lmrDepth)))
                   continue;
           }
           else if (!pos.see_ge(move, Value(-194) * depth)) // (~25 Elo)
@@ -1332,6 +1338,9 @@ moves_loop: // When in check, search starts from here
           Depth halfDepth = depth / 2;
           ss->excludedMove = move;
           value = search<NonPV>(pos, ss, singularBeta - 1, singularBeta, halfDepth, cutNode);
+#ifdef HELPMATE
+          if (pos.is_helpmate()) value = -value;
+#endif
           ss->excludedMove = MOVE_NONE;
 
           if (value < singularBeta)
@@ -1480,6 +1489,9 @@ moves_loop: // When in check, search starts from here
           Depth d = Utility::clamp(newDepth - r, 1, newDepth);
 
           value = -search<NonPV>(pos, ss+1, -(alpha+1), -alpha, d, true);
+#ifdef HELPMATE
+          if (pos.is_helpmate()) value = -value;
+#endif
 
           doFullDepthSearch = (value > alpha && d != newDepth), didLMR = true;
       }
@@ -1490,6 +1502,10 @@ moves_loop: // When in check, search starts from here
       if (doFullDepthSearch)
       {
           value = -search<NonPV>(pos, ss+1, -(alpha+1), -alpha, newDepth, !cutNode);
+#ifdef HELPMATE
+          if (pos.is_helpmate()) value = -value;
+#endif
+      }
 
           if (didLMR && !captureOrPromotion)
           {
@@ -1512,6 +1528,9 @@ moves_loop: // When in check, search starts from here
           (ss+1)->pv[0] = MOVE_NONE;
 
           value = -search<PV>(pos, ss+1, -beta, -alpha, newDepth, false);
+#ifdef HELPMATE
+          if (pos.is_helpmate()) value = -value;
+#endif
       }
 
       // Step 18. Undo move
@@ -1630,10 +1649,6 @@ moves_loop: // When in check, search starts from here
 
     assert(bestValue > -VALUE_INFINITE && bestValue < VALUE_INFINITE);
 
-#ifdef HELPMATE
-    if (pos.is_helpmate())
-        return -bestValue;
-#endif
     return bestValue;
   }
 
@@ -1833,6 +1848,9 @@ moves_loop: // When in check, search starts from here
       // Make and search the move
       pos.do_move(move, st, givesCheck);
       value = -qsearch<NT>(pos, ss+1, -beta, -alpha, depth - 1);
+#ifdef HELPMATE
+      if (pos.is_helpmate()) value = -value;
+#endif
       pos.undo_move(move);
 
       assert(value > -VALUE_INFINITE && value < VALUE_INFINITE);
