@@ -1039,6 +1039,10 @@ namespace {
 
         tte->save(posKey, VALUE_NONE, ttPv, BOUND_NONE, DEPTH_NONE, MOVE_NONE, eval);
     }
+#ifdef HELPMATE
+    if (pos.is_helpmate())
+        eval = -eval;
+#endif
 
     // Step 7. Razoring (~1 Elo)
 #ifdef ANTI
@@ -1259,6 +1263,10 @@ moves_loop: // When in check, search starts from here
           (ss+1)->pv = nullptr;
 
       extension = 0;
+#ifdef HELPMATE
+      if (pos.is_helpmate())
+          captureOrPromotion = (type_of(move) == PROMOTION);
+#endif
       captureOrPromotion = pos.capture_or_promotion(move);
       movedPiece = pos.moved_piece(move);
       givesCheck = pos.gives_check(move);
@@ -1490,7 +1498,8 @@ moves_loop: // When in check, search starts from here
 
           value = -search<NonPV>(pos, ss+1, -(alpha+1), -alpha, d, true);
 #ifdef HELPMATE
-          if (pos.is_helpmate()) value = -value;
+          if (pos.is_helpmate())
+              value = -value;
 #endif
 
           doFullDepthSearch = (value > alpha && d != newDepth), didLMR = true;
@@ -1503,7 +1512,8 @@ moves_loop: // When in check, search starts from here
       {
           value = -search<NonPV>(pos, ss+1, -(alpha+1), -alpha, newDepth, !cutNode);
 #ifdef HELPMATE
-          if (pos.is_helpmate()) value = -value;
+          if (pos.is_helpmate())
+              value = -value;
 #endif
       }
 
@@ -1529,7 +1539,8 @@ moves_loop: // When in check, search starts from here
 
           value = -search<PV>(pos, ss+1, -beta, -alpha, newDepth, false);
 #ifdef HELPMATE
-          if (pos.is_helpmate()) value = -value;
+          if (pos.is_helpmate())
+              value = -value;
 #endif
       }
 
@@ -1849,7 +1860,8 @@ moves_loop: // When in check, search starts from here
       pos.do_move(move, st, givesCheck);
       value = -qsearch<NT>(pos, ss+1, -beta, -alpha, depth - 1);
 #ifdef HELPMATE
-      if (pos.is_helpmate()) value = -value;
+      if (pos.is_helpmate())
+          value = -value;
 #endif
       pos.undo_move(move);
 
