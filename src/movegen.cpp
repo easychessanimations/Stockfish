@@ -340,7 +340,6 @@ namespace {
         }
 #endif
 
-
         if (Checks)
             b &= pos.check_squares(Pt);
 
@@ -827,6 +826,9 @@ ExtMove* generate<LEGAL>(const Position& pos, ExtMove* moveList) {
 #endif
 #ifdef TWOKINGS
   if (pos.is_two_kings()) validate = true;
+#endif
+#ifdef RELAY
+  if (pos.is_relay()) validate = true;
 #endif
   Square ksq;
 #ifdef HORDE
